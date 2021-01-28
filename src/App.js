@@ -1,7 +1,7 @@
 import { useReducer, useRef, useEffect } from "react";
 import "./styles.css";
 
-// custom hook to run middleware for userReducer hook
+// custom hook to run middleware for useReducer hook
 const useReducerWithMiddleware = (
   reducer,
   initialState,
