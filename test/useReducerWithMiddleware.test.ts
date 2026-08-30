@@ -110,7 +110,7 @@ describe("useReducerWithMiddleware", () => {
     expect(afterDispatch).toHaveBeenNthCalledWith(
       1,
       { type: "increment" },
-      { count: 2 },
+      { count: 1 },
     );
     expect(afterDispatch).toHaveBeenNthCalledWith(
       2,

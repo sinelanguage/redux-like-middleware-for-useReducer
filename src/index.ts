@@ -73,6 +73,7 @@ export function useReducerWithMiddleware<State, Action, InitialArg = State>(
   );
 
   const stateRef = useRef(state);
+  const batchStartStateRef = useRef<State | null>(null);
   const actionQueueRef = useRef<Action[]>([]);
   const beforeDispatchRef = useRef(beforeDispatch);
   const afterDispatchRef = useRef(afterDispatch);
@@ -87,18 +88,29 @@ export function useReducerWithMiddleware<State, Action, InitialArg = State>(
     }
 
     const queuedActions = actionQueueRef.current;
+    const batchStartState = batchStartStateRef.current ?? state;
+
     actionQueueRef.current = [];
+    batchStartStateRef.current = null;
+
+    let nextState = batchStartState;
 
     for (const action of queuedActions) {
+      nextState = reducer(nextState, action);
+
       for (const middleware of afterDispatchRef.current) {
-        middleware(action, state);
+        middleware(action, nextState);
       }
     }
-  }, [state]);
+  }, [reducer, state]);
 
   const dispatchWithMiddleware = useCallback<Dispatch<Action>>((action) => {
     for (const middleware of beforeDispatchRef.current) {
       middleware(action, stateRef.current);
+    }
+
+    if (actionQueueRef.current.length === 0) {
+      batchStartStateRef.current = stateRef.current;
     }
 
     actionQueueRef.current.push(action);
