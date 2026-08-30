@@ -1,4 +1,4 @@
-import { Dispatch, Reducer, useEffect, useReducer, useRef } from "react";
+import { Dispatch, Reducer, useCallback, useEffect, useReducer, useRef } from "react";
 
 export type DispatchMiddleware<State, Action> = (
   action: Action,
@@ -49,6 +49,10 @@ function normalizeOptions<State, Action, InitialArg>(
   };
 }
 
+function defaultInitializer<State, InitialArg>(initialArg: InitialArg): State {
+  return initialArg as unknown as State;
+}
+
 export function useReducerWithMiddleware<State, Action, InitialArg = State>(
   reducer: Reducer<State, Action>,
   initialArg: InitialArg,
@@ -62,12 +66,14 @@ export function useReducerWithMiddleware<State, Action, InitialArg = State>(
     legacyAfterDispatch,
   );
 
-  const [state, dispatch] = initializer
-    ? useReducer(reducer, initialArg, initializer)
-    : useReducer(reducer, initialArg as unknown as State);
+  const [state, dispatch] = useReducer(
+    reducer,
+    initialArg,
+    initializer ?? defaultInitializer<State, InitialArg>,
+  );
 
   const stateRef = useRef(state);
-  const actionRef = useRef<Action | null>(null);
+  const actionQueueRef = useRef<Action[]>([]);
   const beforeDispatchRef = useRef(beforeDispatch);
   const afterDispatchRef = useRef(afterDispatch);
 
@@ -76,26 +82,28 @@ export function useReducerWithMiddleware<State, Action, InitialArg = State>(
   afterDispatchRef.current = afterDispatch;
 
   useEffect(() => {
-    if (actionRef.current === null) {
+    if (actionQueueRef.current.length === 0) {
       return;
     }
 
-    const action = actionRef.current;
-    actionRef.current = null;
+    const queuedActions = actionQueueRef.current;
+    actionQueueRef.current = [];
 
-    for (const middleware of afterDispatchRef.current) {
-      middleware(action, state);
+    for (const action of queuedActions) {
+      for (const middleware of afterDispatchRef.current) {
+        middleware(action, state);
+      }
     }
   }, [state]);
 
-  const dispatchWithMiddleware: Dispatch<Action> = (action) => {
+  const dispatchWithMiddleware = useCallback<Dispatch<Action>>((action) => {
     for (const middleware of beforeDispatchRef.current) {
       middleware(action, stateRef.current);
     }
 
-    actionRef.current = action;
+    actionQueueRef.current.push(action);
     dispatch(action);
-  };
+  }, [dispatch]);
 
   return [state, dispatchWithMiddleware];
 }

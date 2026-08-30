@@ -91,4 +91,31 @@ describe("useReducerWithMiddleware", () => {
 
     expect(result.current[0]).toEqual({ count: 5 });
   });
+
+  it("runs after-dispatch middleware for each batched action", () => {
+    const afterDispatch = vi.fn();
+
+    const { result } = renderHook(() =>
+      useReducerWithMiddleware(counterReducer, { count: 0 }, {
+        afterDispatch: [afterDispatch],
+      }),
+    );
+
+    act(() => {
+      result.current[1]({ type: "increment" });
+      result.current[1]({ type: "increment" });
+    });
+
+    expect(result.current[0]).toEqual({ count: 2 });
+    expect(afterDispatch).toHaveBeenNthCalledWith(
+      1,
+      { type: "increment" },
+      { count: 2 },
+    );
+    expect(afterDispatch).toHaveBeenNthCalledWith(
+      2,
+      { type: "increment" },
+      { count: 2 },
+    );
+  });
 });

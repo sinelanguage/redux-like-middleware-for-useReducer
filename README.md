@@ -5,6 +5,7 @@ Redux-style middleware for React's `useReducer` hook, packaged as a small, typed
 ## Features
 
 - Works with React 18 and 19
+- Targets modern Node.js runtimes (22.22.2+) for development and release automation
 - Ships ESM, CommonJS, sourcemaps, and TypeScript declarations
 - Supports middleware before dispatch and after state updates
 - Keeps the original lightweight API, including the legacy positional signature
