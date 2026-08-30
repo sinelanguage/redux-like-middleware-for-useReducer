@@ -15,10 +15,11 @@ export interface UseReducerWithMiddlewareOptions<
   initializer?: (initialArg: InitialArg) => State;
 }
 
-type MiddlewareConfig<State, Action, InitialArg> = Pick<
-  UseReducerWithMiddlewareOptions<State, Action, InitialArg>,
-  "beforeDispatch" | "afterDispatch" | "initializer"
->;
+type MiddlewareConfig<State, Action, InitialArg> = {
+  beforeDispatch: readonly DispatchMiddleware<State, Action>[];
+  afterDispatch: readonly DispatchMiddleware<State, Action>[];
+  initializer?: (initialArg: InitialArg) => State;
+};
 
 function normalizeOptions<State, Action, InitialArg>(
   optionsOrBefore?:
@@ -26,17 +27,25 @@ function normalizeOptions<State, Action, InitialArg>(
     | readonly DispatchMiddleware<State, Action>[],
   legacyAfterDispatch?: readonly DispatchMiddleware<State, Action>[],
 ): MiddlewareConfig<State, Action, InitialArg> {
-  if (Array.isArray(optionsOrBefore) || legacyAfterDispatch) {
+  const usesLegacySignature =
+    Array.isArray(optionsOrBefore) || legacyAfterDispatch !== undefined;
+
+  if (usesLegacySignature) {
     return {
-      beforeDispatch: optionsOrBefore ?? [],
+      beforeDispatch: Array.isArray(optionsOrBefore) ? optionsOrBefore : [],
       afterDispatch: legacyAfterDispatch ?? [],
     };
   }
 
+  const options =
+    optionsOrBefore as
+      | UseReducerWithMiddlewareOptions<State, Action, InitialArg>
+      | undefined;
+
   return {
-    beforeDispatch: optionsOrBefore?.beforeDispatch ?? [],
-    afterDispatch: optionsOrBefore?.afterDispatch ?? [],
-    initializer: optionsOrBefore?.initializer,
+    beforeDispatch: options?.beforeDispatch ?? [],
+    afterDispatch: options?.afterDispatch ?? [],
+    initializer: options?.initializer,
   };
 }
 

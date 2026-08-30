@@ -58,9 +58,10 @@
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "tsup": "8.5.1",
-    "typescript": "7.0.2",
+    "typescript": "5.9.3",
     "typescript-eslint": "8.68.0",
-    "vitest": "4.1.11"
+    "vitest": "4.1.11",
+    "@vitest/coverage-v8": "4.1.11"
   },
   "scripts": {
     "build": "tsup",
@@ -70,5 +71,8 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "prepublishOnly": "npm run clean && npm run lint && npm run typecheck && npm run test && npm run build"
+  },
+  "overrides": {
+    "esbuild": "0.28.2"
   }
 }
